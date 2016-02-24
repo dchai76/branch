@@ -9,14 +9,14 @@ based on the call logs, contact lists, and sms logs
 import json, os, re, sys
 
 # Given a user log directory, return map of features
-def pull_features_for_user(userid):
-    features = { 'userid': userid }
-    devices = os.listdir('users/%d' % userid)
+def pull_features_for_user(basedir, user_id):
+    features = { 'user_id': user_id }
+    devices = os.listdir('%s/%d' % (basedir, user_id))
     # TODO - check if user has more than one device
     for device in devices:
-        features.update(pull_call_log_features('users/%d/%s' % (userid, device)))
-        features.update(pull_contact_list_features('users/%d/%s' % (userid, device)))
-        features.update(pull_sms_log_features('users/%d/%s' % (userid, device)))
+        features.update(pull_call_log_features('users/%d/%s' % (user_id, device)))
+        features.update(pull_contact_list_features('users/%d/%s' % (user_id, device)))
+        features.update(pull_sms_log_features('users/%d/%s' % (user_id, device)))
     return features
 
 def pull_call_log_features(basedir):
@@ -118,7 +118,11 @@ def pull_sms_log_features(basedir):
 
         if money_amounts:
             # int() doesn't like commas
-            max_val = max(map(lambda x: (int(x.replace(',', ''))), money_amounts))
+            money_amounts = filter(None, [x.replace(',', '') for x in money_amounts])
+
+        if money_amounts:
+            max_val = max(map(int, money_amounts))
+
             # print money_amounts
             # print max_val
             if 'loan' in message:
