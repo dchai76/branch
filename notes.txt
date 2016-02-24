@@ -1,0 +1,10 @@
+Notes:
+
+- I did some reading and decided for a binary classifier, it made more sense to
+  use a simple linear model than what I was doing. It also made more sense to
+  use a pre-existing Python package to do the ML so I'm using scikit-learn. I'm
+  also using logistic regression (a logistic loss function + Stochastic Gradient
+  Descent) for the learning algorithm because it seems reasonable and Amazon ML
+  uses that for binary classification.
+- I couldn't figure out a smart way to pull semantic features (like whether they
+  have other loans) so I'm going with a pattern matching approach for now.
