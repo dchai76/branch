@@ -8,6 +8,9 @@ based on the call logs, contact lists, and sms logs
 
 import json, os, re, sys
 
+# Sanity check for over big numbers
+max_max_value = 100000
+
 # Given a user log directory, return map of features
 def pull_features_for_user(basedir, user_id):
     features = { 'user_id': user_id }
@@ -43,8 +46,8 @@ def pull_call_log_features(basedir):
     return {
         'earliest_call': earliest_call,
         'latest_call': latest_call,
-        'unique_calls': len(unique_calls),
-        'total_calls': len(call_log_data),
+        'unique_calls': int(len(unique_calls)),
+        'total_calls': int(len(call_log_data)),
         }
 
 def pull_contact_list_features(basedir):
@@ -56,21 +59,17 @@ def pull_contact_list_features(basedir):
         with open('%s/contact_list/%s' % (basedir, contact_list)) as data_file:
             contact_list_data += json.load(data_file)
 
-    last_time_contacted = 0
     max_times_contacted = 0
     unique_contacts_with_phone = 0
     for contact in contact_list_data:
-        if contact['last_time_contacted'] > last_time_contacted:
-            last_time_contacted = contact['last_time_contacted']
         if contact['times_contacted'] > max_times_contacted:
             max_times_contacted = contact['times_contacted']
         if contact['phone_numbers']:
             unique_contacts_with_phone += 1
         
     return {
-        'last_time_contacted': last_time_contacted,
         'max_times_contacted': max_times_contacted,
-        'unique_contacts': len(contact_list_data),
+        'unique_contacts': int(len(contact_list_data)),
         'unique_contacts_with_phone': unique_contacts_with_phone,
         }
 
@@ -121,7 +120,7 @@ def pull_sms_log_features(basedir):
             money_amounts = filter(None, [x.replace(',', '') for x in money_amounts])
 
         if money_amounts:
-            max_val = max(map(int, money_amounts))
+            max_val = min(max(map(int, money_amounts)), max_max_value)
 
             # print money_amounts
             # print max_val
@@ -139,8 +138,8 @@ def pull_sms_log_features(basedir):
     return {
          'earliest_sms': earliest_sms,
          'latest_sms': latest_sms,
-         'unique_sms': len(unique_sms),
-         'total_sms': len(sms_log_data),
+         'unique_sms': int(len(unique_sms)),
+         'total_sms': int(len(sms_log_data)),
          'probable_loaned_before': probable_loaned_before,
          'probable_max_loan': probable_max_loan,
          'probable_credit_before': probable_credit_before,
@@ -149,7 +148,7 @@ def pull_sms_log_features(basedir):
         }
 
 def main():
-    user_features = pull_features_for_user(int(sys.argv[1]))
+    user_features = pull_features_for_user(sys.argv[1], int(sys.argv[2]))
     print user_features
 
 if __name__ == "__main__":

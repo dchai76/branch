@@ -10,10 +10,35 @@ based on the call logs, contact lists, and sms logs
 import re, sqlite3, sys
 from features import pull_features_for_user
 
+# Map of feature keys to types
+feature_keys = {
+    'user_id': 'int',
+    'earliest_call': 'timestamp',
+    'earliest_sms': 'timestamp',
+    'latest_call': 'timestamp',
+    'latest_sms': 'timestamp',
+    'max_times_contacted': 'int',
+    'probable_credit_before': 'bool',
+    'probable_loaned_before': 'bool',
+    'probable_max_credit': 'int',
+    'probable_max_loan': 'int',
+    'probable_missed_payment': 'bool',
+    'total_calls': 'int',
+    'total_sms': 'int',
+    'unique_calls': 'int',
+    'unique_contacts': 'int',
+    'unique_contacts_with_phone': 'int',
+    'unique_sms': 'int',
+}
+
 def save_training_features(basedir, training_user_ids,
                            save_db, save_table='training_features'):
-    features_by_user = { user_id: pull_features_for_user(basedir, user_id) for user_id in training_user_ids }
-    feature_keys = features_by_user[training_user_ids[0]].keys()
+    features_by_user = {}
+    for user_id in training_user_ids:
+        features_by_user[user_id] = pull_features_for_user(basedir, user_id)
+        # Filter out empty data (where only user ID set)
+        if len(features_by_user[user_id]) == 1:
+            features_by_user.pop(user_id)
 
     # Assemble the table sql
     create_cols = ', '.join(["%s INT" % col for col in feature_keys])
@@ -22,7 +47,7 @@ def save_training_features(basedir, training_user_ids,
     # convert map to sql insert list
     rows = []
     for user_id, features in features_by_user.iteritems():
-        rows.append([features.get(key) for key in feature_keys])
+        rows.append([features.get(key, 0) for key in feature_keys])
 
     conn = sqlite3.connect(save_db)
     with conn:
